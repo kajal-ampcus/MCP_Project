@@ -7,7 +7,7 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 MODEL_NAME = os.getenv(
     "MODEL_NAME",
-    "llama-3.1-8b-instant"
+    "openai/gpt-oss-120b"
 )
 
 MCP_SERVER_URL = os.getenv(
