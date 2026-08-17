@@ -5,6 +5,9 @@ import server.tools.calendar
 
 import server.tools.weather
 import server.tools.email
+import server.tools.notetaker
+import server.tools.meeting
+import server.tools.test_calendar
 
 if __name__ == "__main__":
     
