@@ -102,16 +102,24 @@ class MeetingService:
                     )
                 )
 
+                notetaker_id = result.get("id")
+
                 return {
                     "success": True,
-                    "meeting": (
+                    "message": f"Successfully joined meeting: {event['title']}",
+                    "meeting_title": (
                         event["title"]
                     ),
                     "meeting_url": (
                         meeting_url
                     ),
-                    "notetaker": str(
-                        result
+                    "notetaker_id": notetaker_id,
+                    "notetaker_status": result.get("status"),
+                    "instructions": (
+                        f"Notetaker bot is joining the meeting. "
+                        f"Use get_notetaker_status('{notetaker_id}') to check progress. "
+                        f"After the meeting, use get_meeting_transcript('{notetaker_id}') "
+                        f"or get_meeting_summary('{notetaker_id}') to retrieve notes."
                     ),
                 }
 

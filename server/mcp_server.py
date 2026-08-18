@@ -4,7 +4,7 @@ from server.config import HOST, PORT
 
 
 mcp = FastMCP(
-    "Weather MCP Server",
+    "Nylas MCP Server - Calendar, Email & Meeting Notetaker",
     host=HOST,
     port=PORT,
 )
