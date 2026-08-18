@@ -1,3 +1,4 @@
+import webbrowser
 from datetime import datetime
 
 from server.services.calendar_service import (
@@ -48,17 +49,23 @@ class MeetingService:
 
         for event in events:
 
+            # 'when' is a Nylas Timespan dataclass — access via attributes, not .get()
             when = event.get(
                 "when",
-                {}
             )
 
-            start_time = when.get(
-                "start_time"
+            if when is None:
+                continue
+
+            # Timespan exposes start_time as a plain attribute (int), not a dict key
+            start_time = getattr(
+                when,
+                "start_time",
+                None,
             )
 
             if (
-                start_time
+                start_time is not None
                 and start_time >= now
             ):
 
@@ -66,15 +73,18 @@ class MeetingService:
                     event
                 )
 
+        # Sort by start_time using attribute access (Timespan is a dataclass)
         future_events.sort(
-            key=lambda event:
-            event["when"][
-                "start_time"
-            ]
+            key=lambda e: getattr(
+                e["when"],
+                "start_time",
+                0,
+            )
         )
 
         for event in future_events:
 
+            # 'conferencing' is a Nylas Details dataclass — not a plain dict
             conferencing = event.get(
                 "conferencing"
             )
@@ -83,12 +93,15 @@ class MeetingService:
 
                 continue
 
-            details = (
-                conferencing.get(
-                    "details",
-                    {}
-                )
+            # conferencing.details is a Dict[str, Any] — use attribute access, then .get()
+            details = getattr(
+                conferencing,
+                "details",
+                None,
             )
+
+            if not details:
+                continue
 
             meeting_url = (
                 details.get("url")
@@ -96,17 +109,27 @@ class MeetingService:
 
             if meeting_url:
 
-                result = (
-                    self.notetaker_service.create_notetaker(
-                        meeting_url
-                    )
-                )
+                # Open the meeting link directly in the default browser (Google Meet)
+                webbrowser.open(meeting_url)
 
-                notetaker_id = result.get("id")
+                # Also dispatch the Nylas notetaker bot to capture transcript/notes
+                try:
+                    result = (
+                        self.notetaker_service.create_notetaker(
+                            meeting_url
+                        )
+                    )
+                    notetaker_id = result.get("id")
+                    notetaker_status = result.get("status")
+                except Exception as e:
+                    notetaker_id = None
+                    notetaker_status = f"Notetaker error: {e}"
 
                 return {
                     "success": True,
-                    "message": f"Successfully joined meeting: {event['title']}",
+                    "message": (
+                        f"Opening meeting in browser: {event['title']}"
+                    ),
                     "meeting_title": (
                         event["title"]
                     ),
@@ -114,18 +137,23 @@ class MeetingService:
                         meeting_url
                     ),
                     "notetaker_id": notetaker_id,
-                    "notetaker_status": result.get("status"),
+                    "notetaker_status": notetaker_status,
                     "instructions": (
-                        f"Notetaker bot is joining the meeting. "
-                        f"Use get_notetaker_status('{notetaker_id}') to check progress. "
-                        f"After the meeting, use get_meeting_transcript('{notetaker_id}') "
-                        f"or get_meeting_summary('{notetaker_id}') to retrieve notes."
+                        f"The meeting link has been opened in your browser. "
+                        f"Notetaker bot is also joining. "
+                        + (
+                            f"Use get_notetaker_status('{notetaker_id}') to check progress. "
+                            f"After the meeting, use get_meeting_transcript('{notetaker_id}') "
+                            f"or get_meeting_summary('{notetaker_id}') to retrieve notes."
+                            if notetaker_id
+                            else ""
+                        )
                     ),
                 }
 
         return {
             "success": False,
             "message": (
-                "No meeting link found."
+                "No upcoming meeting with a join link was found."
             ),
         }
