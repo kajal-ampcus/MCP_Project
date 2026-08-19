@@ -1,12 +1,12 @@
-from .mcp_server import mcp
+from server.mcp_server import mcp
 
-from .tools import datetime
-from .tools import calendar
-from .tools import weather
-from .tools import email
-from .tools import notetaker
-from .tools import meeting
-from .tools import test_calendar
+import server.tools.datetime
+import server.tools.calendar
+import server.tools.weather
+import server.tools.email
+import server.tools.notetaker
+import server.tools.meeting
+import server.tools.test_calendar
 
 if __name__ == "__main__":
     
